@@ -1,0 +1,8 @@
+.DS_Store
+node_modules/
+
+# Written by the engine on every load of a mod; regenerate, never commit
+**/.claude-plugin/types/
+
+# Personal Claude Code settings
+.claude/settings.local.json

@@ -1,0 +1,13 @@
+{
+  "name": "tangents",
+  "version": "0.1.0",
+  "description": "Go off on a tangent about any paragraph of Claude's replies, kept out of the main context until you promote it",
+  "author": { "name": "buildwithpulkit" },
+  "license": "MIT",
+  "homepage": "https://github.com/buildwithpulkit/plug-into-claude/tree/main/plugins/tangents",
+  "repository": "https://github.com/buildwithpulkit/plug-into-claude",
+  "documentationUrl": "https://github.com/buildwithpulkit/plug-into-claude/tree/main/plugins/tangents#readme",
+  "supportUrl": "https://github.com/buildwithpulkit/plug-into-claude/issues",
+  "privacyPolicyUrl": "https://github.com/buildwithpulkit/plug-into-claude/blob/main/plugins/tangents/PRIVACY.md",
+  "types": "./types/index.d.ts"
+}
