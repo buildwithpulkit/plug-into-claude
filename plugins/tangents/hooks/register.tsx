@@ -24,6 +24,10 @@ const PANE = 'tangents'
 const START_LABEL = '↳ Tangent'
 const CONTROL_COLUMNS = START_LABEL.length
 
+// The sidebar quotes the paragraph as a short plain-text excerpt: the whole of
+// it is in the reply beside the pane, and a long one would push the tangent down.
+const QUOTE_CHARS = 280
+
 // The session state this mod keeps (types/index.d.ts). Each is read and written
 // with $.state.get and $.state.set; a get while drawing subscribes the drawing.
 const TANGENTS = { plugin: 'tangents', key: 'tangents' } as const
@@ -336,56 +340,74 @@ export const register: Register = on => {
     // Mobile draws no Input: the tangent is read-only there.
     const Input = 'Input' in table ? table.Input : undefined
     const status = tangent.isPromoted ? 'Promoted ✓' : tangent.isPromoting ? 'Promoting…' : undefined
+    // A desktop row of margin is a thin gap; two give the sections room.
+    const gap = e.surface === 'terminal' ? 1 : 2
 
+    // The pane's own title already reads "Tangent", so the body opens on the
+    // hint. It fills the pane's height, so the input and the buttons sit at its
+    // bottom with the conversation above them.
     return (
-      <Box flexDirection="column">
-        <Box flexDirection="row" justifyContent="space-between">
-          <Text bold>Tangent</Text>
-          {status !== undefined && <Text color={tangent.isPromoted ? 'green' : undefined} dimColor={!tangent.isPromoted}>{status}</Text>}
-        </Box>
-        <Text dimColor wrap="truncate-end">
-          From Claude's reply “{tangent.replyHint}” · paragraph {tangent.paragraphIndex + 1} of {tangent.paragraphCount}
-        </Text>
-        <Box marginTop={1}>
-          <Markdown dimColor text={clip(tangent.paragraph, MAX_MARKDOWN_CHARS).replace(/^/gm, '> ')} />
-        </Box>
-        {tangent.messages.map((message, index) => (
-          <Box key={`m${index}`} flexDirection="column" marginTop={1}>
-            <Text bold color={message.role === 'assistant' ? 'cyan' : undefined}>
-              {message.role === 'user' ? 'You' : 'Claude'}
-            </Text>
-            {message.isError ? (
-              <Text color="red">{message.text}</Text>
-            ) : (
-              <Markdown text={clip(message.text, MAX_MARKDOWN_CHARS)} />
+      <Box flexDirection="column" minHeight={e.props.scroll.bodyRows}>
+        <Box flexDirection="column" flexGrow={1}>
+          <Box flexDirection="row" justifyContent="space-between" columnGap={1}>
+            <Box flexShrink={1}>
+              <Text dimColor wrap="truncate-end">
+                From Claude's reply “{tangent.replyHint}” · paragraph {tangent.paragraphIndex + 1} of {tangent.paragraphCount}
+              </Text>
+            </Box>
+            {status !== undefined && (
+              <Box flexShrink={0}>
+                <Text color={tangent.isPromoted ? 'green' : undefined} dimColor={!tangent.isPromoted}>{status}</Text>
+              </Box>
             )}
           </Box>
-        ))}
-        {tangent.isPending && (
-          <Box marginTop={1}>
-            <Text dimColor>Claude is thinking…</Text>
+          <Box marginTop={gap}>
+            <Markdown dimColor text={`> ${preview(tangent.paragraph, QUOTE_CHARS)}`} />
           </Box>
-        )}
-        {tangent.promoteError !== undefined && (
-          <Box marginTop={1}>
-            <Text color="red">{tangent.promoteError}</Text>
-          </Box>
-        )}
-        <Box marginTop={1} flexDirection="column">
+          {tangent.messages.map((message, index) => (
+            <Box key={`m${index}`} flexDirection="column" marginTop={gap}>
+              <Text bold color={message.role === 'assistant' ? 'cyan' : undefined}>
+                {message.role === 'user' ? 'You' : 'Claude'}
+              </Text>
+              {message.isError ? (
+                <Text color="red">{message.text}</Text>
+              ) : (
+                <Markdown text={clip(message.text, MAX_MARKDOWN_CHARS)} />
+              )}
+            </Box>
+          ))}
+          {tangent.isPending && (
+            <Box marginTop={gap}>
+              <Text dimColor>Claude is thinking…</Text>
+            </Box>
+          )}
+          {tangent.promoteError !== undefined && (
+            <Box marginTop={gap}>
+              <Text color="red">{tangent.promoteError}</Text>
+            </Box>
+          )}
+        </Box>
+        <Box marginTop={gap} flexDirection="column">
           {Input === undefined ? (
             <Text dimColor>Reply from the terminal or desktop.</Text>
           ) : (
-            <Input
-              key={`ask${tangent.messages.length}`}
-              placeholder={tangent.isPending ? 'Waiting for the reply…' : 'Ask about this paragraph…'}
-              submitLabel="send"
-              autoFocus
-              onSubmit={value => ask($, tangent.id, value)}
-            />
+            // Input takes no width of its own: a growing cell in a full-width
+            // row asks the surface to stretch the field across the pane.
+            <Box flexDirection="row" width="100%">
+              <Box flexGrow={1} flexShrink={1}>
+                <Input
+                  key={`ask${tangent.messages.length}`}
+                  placeholder={tangent.isPending ? 'Waiting for the reply…' : 'Ask about this paragraph…'}
+                  submitLabel="send"
+                  autoFocus
+                  onSubmit={value => ask($, tangent.id, value)}
+                />
+              </Box>
+            </Box>
           )}
           <Box flexDirection="row" gap={1} marginTop={1}>
             {!tangent.isPromoted && (
-              <Button key="promote" label="⇪ Promote to main" onPress={() => promote($, tangent.id)} />
+              <Button key="promote" variant="primary" label="⇪ Promote to main" onPress={() => promote($, tangent.id)} />
             )}
             <Button key="all" label="All tangents" onPress={() => show($, 'list', null)} />
             <Button key="close" role="dismiss" label="Close" onPress={() => close($)} />
