@@ -157,7 +157,9 @@ for (const surface of ['terminal', 'desktop'] as const) {
     await reply.press({ key: 'reply1' })
 
     const pane = await $.ui.mount({ plugin: PLUGIN, surface, component: 'Pane', requestId: PANE, props: PANE_PROPS })
-    expect(await pane.find({ type: 'Text', text: 'Tangent' })).toBeDefined()
+    // The pane's title names it; the body draws no second "Tangent" heading.
+    expect(await pane.find({ type: 'Text', text: 'Tangent' })).toBeUndefined()
+    expect((await pane.find({ type: 'Button', key: 'promote' }))?.props.variant).toBe('primary')
     expect(await pane.find({ type: 'Markdown', text: /Eviction runs every five minutes/ })).toBeDefined()
     expect(await pane.find({ type: 'Text', text: /paragraph 2 of 3/ })).toBeDefined()
 
