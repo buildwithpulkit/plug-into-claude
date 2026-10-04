@@ -261,8 +261,10 @@ export const register: Register = on => {
       )
     }
 
+    // Each Markdown trims its own outer margins, so off the terminal the
+    // paragraphs would touch; a row between them restores the reply's spacing.
     return (
-      <Box flexDirection="column">
+      <Box flexDirection="column" rowGap={isTerminal ? 0 : 1}>
         {paragraphs.map((paragraph, index) => {
           const count = replyCount(all[tangentIdFor(e.requestId, paragraph)])
           const open = () => openTangent($, e.requestId, block, paragraphs, index)
